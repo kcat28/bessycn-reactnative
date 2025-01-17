@@ -30,7 +30,7 @@ const RewardsAssign: React.FC<RewardsAssignProps> = ({ setSelectedReward }) => {
 
     return (
         <View>
-            <HorizontalImageScroller title="Rewards" images={images} onImagePress={handleImagePress} />
+            <HorizontalImageScroller title="Rewards" images={images} onImagePress={handleImagePress} multiple={false} />
         </View>
     );
 };

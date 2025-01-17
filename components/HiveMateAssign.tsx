@@ -1,17 +1,12 @@
-import React from "react";
-import { View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, ActivityIndicator } from "react-native";
 import HorizontalImageScroller from "./HorizontalImageScroller";
 
-const HiveMateImages = [
-  require("../resources/HiveMate/Group 146.png"),
-  require("../resources/HiveMate/Group 147.png"),
-  require("../resources/HiveMate/Group 148.png"),
-  require("../resources/HiveMate/Group 149.png"),
-  require("../resources/HiveMate/Group 150.png"),
-  require("../resources/HiveMate/Group 151.png"),
-  require("../resources/HiveMate/Group 152.png"),
-  require("../resources/HiveMate/Group 153.png"),
-];
+interface User {
+  user_id: number;
+  firstname: string;
+  lastname: string;
+}
 
 interface HiveMateAssignProps {
   selectedHiveMates: Array<{ user_id: number }>;
@@ -24,21 +19,49 @@ const HiveMateAssign: React.FC<HiveMateAssignProps> = ({
   setSelectedHiveMates,
   isToggleEnabled,
 }) => {
+  const [hiveMates, setHiveMates] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHiveMates = async () => {
+      try {
+        const response = await fetch("http://192.168.0.106:8080/HiveMembers/"); // Replace with your API endpoint
+        const data = await response.json();
+        const formattedData = data.map((user: any) => ({
+          user_id: user.userId,
+          firstname: user.firstname,
+          lastname: user.lastname,
+        }));
+        setHiveMates(formattedData);
+      } catch (error) {
+        console.error("Failed to fetch hive mates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHiveMates();
+  }, []);
+
   if (isToggleEnabled) {
     return null; // Don't render if toggled
   }
 
-  const handleImagePress = (selectedIndices: number[]) => {
-    const newHiveMates = selectedIndices.map((index) => ({ user_id: index + 1 }));
+  const handleUserPress = (selectedIndices: number[]) => {
+    const newHiveMates = selectedIndices.map((index) => ({ user_id: hiveMates[index].user_id }));
     setSelectedHiveMates(newHiveMates); // Update parent state
   };
+
+  if (loading) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
 
   return (
     <View>
       <HorizontalImageScroller
         title="Assign to"
-        images={HiveMateImages}
-        onImagePress={handleImagePress}
+        users={hiveMates}
+        onUserPress={handleUserPress}
       />
     </View>
   );

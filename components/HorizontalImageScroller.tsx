@@ -2,26 +2,34 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from "react-native";
 import { useState } from "react";
 
-const Add = require("../resources/Add.png");
-
 interface HorizontalImageScrollerProps {
     title: string;
-    images: { uri: string }[];
-    onImagePress?: (selectedIndices: number[]) => void; // handles multiple selection
+    users?: { user_id: number, firstname: string, lastname: string }[];
+    images?: any[];
+    onUserPress?: (selectedIndices: number[]) => void;
+    onImagePress?: (selectedIndices: number[]) => void;
+    multiple?: boolean;
 }
 
-const HorizontalImageScroller: React.FC<HorizontalImageScrollerProps> = ({ title, images, onImagePress }) => {
+const HorizontalImageScroller: React.FC<HorizontalImageScrollerProps> = ({ title, users, images, onUserPress, onImagePress, multiple = true }) => {
     const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
     const handlePress = (index: number) => {
         setSelectedIndices((prev) => {
-            const updated = prev.includes(index) ? prev.filter((i) => i !== index) // deselect if already selected
-            : [...prev, index]; // add new selection
+            let updated;
+            if(multiple){
+                updated = prev.includes(index) ? prev.filter((i) => i !== index) // deselect if already selected
+                : [...prev, index]; // add new selection
+            } else {
+                updated = prev.includes(index) ? [] : [index]; // single selection logic
+            }
 
-            if (onImagePress) {
+            if (users && onUserPress) {
+                onUserPress(updated); // Send updated indices to parent
+            } else if (images && onImagePress) {
                 onImagePress(updated); // Send updated indices to parent
-              }
-              return updated;
+            }
+            return updated;
         });
     };
     
@@ -30,12 +38,21 @@ const HorizontalImageScroller: React.FC<HorizontalImageScrollerProps> = ({ title
             <Text style={styles.title}>{title}</Text>
 
             <View style={styles.leftSide}>
-                <TouchableOpacity style={styles.addButton}>
-                    <Image source={Add} style={styles.addIcon} />
-                </TouchableOpacity>
-
+              
                 <ScrollView horizontal={true} style={styles.scrollView} showsHorizontalScrollIndicator={false}>
-                    {images.map((image, index) => (
+                    {users && users.map((user, index) => (
+                        <TouchableOpacity 
+                            key={index} 
+                            onPress={() => handlePress(index)} 
+                            style={[
+                                styles.userContainer,
+                                selectedIndices.includes(index) && styles.selectedUserContainer, // Highlight selected
+                            ]}>
+                            <Text style={{color:"#61646B" }}>Hive member: {user.user_id}</Text>
+                            <Text style={{color:"#61646B" }}>{user.firstname} {user.lastname}</Text>
+                        </TouchableOpacity>
+                    ))}
+                    {images && images.map((image, index) => (
                         <TouchableOpacity 
                             key={index} 
                             onPress={() => handlePress(index)} 
@@ -43,7 +60,7 @@ const HorizontalImageScroller: React.FC<HorizontalImageScrollerProps> = ({ title
                                 styles.imageContainer,
                                 selectedIndices.includes(index) && styles.selectedImageContainer, // Highlight selected
                             ]}>
-                            <Image source={image}/>
+                            <Image source={image} style={styles.image} />
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -79,11 +96,16 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexDirection: 'row', 
     },
-    addButton: {
-        marginRight: 10, 
+    selectedUserContainer: {
+        borderWidth: 3,
+        borderColor: "#E7BE00", 
+        borderRadius: 6, 
     },
-    addIcon: {
-        resizeMode: "contain",
+    userContainer: {
+        marginHorizontal: 8,
+        padding: 10,
+        backgroundColor: "#FFF",
+        borderRadius: 6,
     },
     selectedImageContainer: {
         borderWidth: 3,
@@ -92,6 +114,11 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         marginHorizontal: 8,
+    },
+    image: {
+        width: 50,
+        height: 50,
+        resizeMode: "contain",
     }
 });
 

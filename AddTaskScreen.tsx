@@ -44,16 +44,33 @@ const AddTask = () => {
       description: description && description.trim() !== "" ? description : null, // Match "description"
       category, // Match "category"
       task_status: "Ongoing", // Match "task_status" default value is always 'ongoing' as per db design
-      schedule: {
-        user_id: selectedHiveMates.length > 0 ? selectedHiveMates[0].user_id : null, // Add this if needed; replace with dynamic value if applicable
+      rewardpts: selectedReward,
+      schedules: selectedHiveMates.length > 0 ?
+        (isToggleEnabled
+          ? selectedHiveMates.slice(0, 1) // Only one entry if toggle is on
+          : selectedHiveMates // Map all hive mates if toggle is off
+        ).map((mate) => ({
+        user_id: isToggleEnabled ? null : mate.user_id,
         start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD", // Match "start_date"
         end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0], // Match "end_date" // "YYYY-MM-DD"
         recurrence: recurrenceSelected, // Match "recurrence"
         dueTime: endTime.toISOString().split('T')[1].split('.')[0], // Match "dueTime" (adjust naming) // "HH:mm:ss"
-      },
-      assignments: selectedHiveMates.length > 0
-        ? selectedHiveMates.map((mate) => ({
-            user_id: mate.user_id, // Match "user_id"
+      }))
+    : [
+      {
+        user_id: null,
+        start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD", // Match "start_date"
+        end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0], // Match "end_date" // "YYYY-MM-DD"
+        recurrence: recurrenceSelected, // Match "recurrence"
+        dueTime: endTime.toISOString().split('T')[1].split('.')[0], // Match "dueTime" (adjust naming) // "HH:mm:ss"
+    },
+  ],
+      assignments: selectedHiveMates.length > 0 ? 
+        (isToggleEnabled
+          ? selectedHiveMates.slice(0, 1) // Only one entry if toggle is on
+          : selectedHiveMates // Map all hive mates if toggle is off
+        ).map((mate) => ({
+            user_id: isToggleEnabled ? null : mate.user_id, // Match "user_id"
             assignedDate: startDate.toISOString().split('T')[0], // Match "assignedDate" // "YYYY-MM-DD"
           }))
         : [
