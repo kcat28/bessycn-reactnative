@@ -3,6 +3,8 @@ import { ImageBackground, StyleSheet, Text, View, TouchableOpacity, Alert } from
 import { useState } from 'react';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Header from './components/Header';
 import SetTask from './components/SetTask';
 import RewardsAssign from './components/RewardsAssign';
@@ -12,7 +14,7 @@ import Description from './components/Description';
 
 const image = require('./resources/BeePattern2.png');
 
-const AddTask = () => {
+const AddTaskScreen = () => {
 
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
   const [isToggleEnabled, setIsToggleEnabled] = useState(false);
@@ -37,32 +39,97 @@ const AddTask = () => {
 
   // State for HiveMateAssign component
   const [selectedHiveMates, setSelectedHiveMates] = useState<Array<{ user_id: number}>>([]);
+  
+  const uploadImage = async (uri: string) => {
+    const apiUrl = 'http://192.168.0.106:8080/file/upload';
+    const uriParts = uri.split('.');
+    const fileType = uriParts[uriParts.length - 1];
+  
+    // Read the file into a blob
+    const file = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+  
+    const formData = new FormData();
+    formData.append('file', {
+      uri: uri,
+      name: `${taskName}.${fileType}`,
+      type: `image/${fileType}`,
+      data: `data:image/${fileType};base64,${file}`,
+    } as any);
+  
+    try {
+      const jwtToken = await AsyncStorage.getItem('jwtToken');
+      if (!jwtToken) {
+        Alert.alert('Error', 'No JWT token found. Please log in again.');
+        return null;
+      }
+  
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${jwtToken}`,
+        },
+      });
+  
+      const responseText = await response.text();
+      console.log('Raw Response:', responseText);
+  
+      if (response.ok) {
+        try {
+          const data = JSON.parse(responseText);
+          const filePath = data.path.replace(/\\/g, '/');
+          return filePath;
+        } catch (error) {
+          if (error instanceof Error) {
+            throw new Error(`Failed to parse JSON response: ${error.message}`);
+          } else {
+            throw new Error('Failed to parse JSON response');
+          }
+        }
+      } else {
+        throw new Error(`Failed to upload image: ${responseText}`);
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      return null;
+    }
+  };
+  
+  const handleCreateTask = async () => { 
+    let imagePath = null;
+    if(imageUri){
+      imagePath = await uploadImage(imageUri);
+    }
 
-  const handleCreateTask = async () => {
+    //matches DTO task
     const taskData = {
-      title: taskName, // Match "title"
-      description: description && description.trim() !== "" ? description : null, // Match "description"
-      category, // Match "category"
-      task_status: "Ongoing", // Match "task_status" default value is always 'ongoing' as per db design
+      title: taskName, 
+      description: description && description.trim() !== "" ? description : null, 
+      category, 
+      task_status: "Ongoing", 
       rewardpts: selectedReward,
+      img_path: imagePath, 
       schedules: selectedHiveMates.length > 0 ?
         (isToggleEnabled
           ? selectedHiveMates.slice(0, 1) // Only one entry if toggle is on
           : selectedHiveMates // Map all hive mates if toggle is off
         ).map((mate) => ({
         user_id: isToggleEnabled ? null : mate.user_id,
-        start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD", // Match "start_date"
-        end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0], // Match "end_date" // "YYYY-MM-DD"
-        recurrence: recurrenceSelected, // Match "recurrence"
-        dueTime: endTime.toISOString().split('T')[1].split('.')[0], // Match "dueTime" (adjust naming) // "HH:mm:ss"
+        start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD", 
+        end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0], // "YYYY-MM-DD"
+        recurrence: recurrenceSelected, 
+        dueTime: endTime.toISOString().split('T')[1].split('.')[0],  // "HH:mm:ss"
       }))
     : [
       {
         user_id: null,
-        start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD", // Match "start_date"
-        end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0], // Match "end_date" // "YYYY-MM-DD"
+        start_date: startDate.toISOString().split('T')[0], // "YYYY-MM-DD",
+        end_date: isRecurrenceNeverEnds ? null : endDate.toISOString().split('T')[0],  // "YYYY-MM-DD"
         recurrence: recurrenceSelected, // Match "recurrence"
-        dueTime: endTime.toISOString().split('T')[1].split('.')[0], // Match "dueTime" (adjust naming) // "HH:mm:ss"
+        dueTime: endTime.toISOString().split('T')[1].split('.')[0], // "HH:mm:ss"
     },
   ],
       assignments: selectedHiveMates.length > 0 ? 
@@ -70,23 +137,30 @@ const AddTask = () => {
           ? selectedHiveMates.slice(0, 1) // Only one entry if toggle is on
           : selectedHiveMates // Map all hive mates if toggle is off
         ).map((mate) => ({
-            user_id: isToggleEnabled ? null : mate.user_id, // Match "user_id"
-            assignedDate: startDate.toISOString().split('T')[0], // Match "assignedDate" // "YYYY-MM-DD"
+            user_id: isToggleEnabled ? null : mate.user_id, 
+            assignedDate: startDate.toISOString().split('T')[0],  // "YYYY-MM-DD"
           }))
         : [
           {
-            user_id: null, // Set user_id to null
+            user_id: null, 
             assignedDate: startDate.toISOString().split('T')[0], // "YYYY-MM-DD"
           },
         ], // Include date even when no users are assigned
     };
     
     try {
+      const jwtToken = await AsyncStorage.getItem('jwtToken');
+      if (!jwtToken) {
+        Alert.alert('Error', 'No JWT token found. Please log in again.');
+        return;
+      }
+
       console.log('Task data being sent:', taskData);
       const response = await fetch('http://192.168.0.106:8080/tasks/createFullTask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,
         },
         body: JSON.stringify(taskData),
       });
@@ -162,7 +236,7 @@ const AddTask = () => {
 };
 
 
-AddTask.options = {
+AddTaskScreen.options = {
   headerShown: false, 
 };
 
@@ -203,4 +277,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default AddTask;
+export default AddTaskScreen;

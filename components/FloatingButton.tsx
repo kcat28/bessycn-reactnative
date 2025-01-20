@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Animated, View, StyleSheet, PanResponder, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router'; 
+import AddTask from '../AddTaskScreen';
 
 const FloatingButton = () => {
     const router = useRouter(); 

@@ -17,13 +17,7 @@ interface SetTaskProps {
 }
 
 const SetTask: React.FC<SetTaskProps> = ({ imageUri, setImageUri, taskName, setTaskName, category, setCategory, isToggleEnabled, setIsToggleEnabled }) => {
-    //const [isEnabled, setIsEnabled] = React.useState(false);
-    //const toggleSwitch = () => setIsEnabled(previousState => !previousState);
-    // const [imageUri, setImageUri] = useState<string | null>(null);
-    // const [text, setText] = useState('');
-    // const [category, setCategory] = useState<string | null>(null);
-
-
+  
   return (
     <View style={style.container}>
         <Text style = {style.title}>Set your Task name</Text>
