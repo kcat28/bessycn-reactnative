@@ -5,7 +5,7 @@ import LoginScreen from "./components/LoginScreen";
 export default function Index() {
   return (
     <View style={style.container}>
-      {/* <Text style={style.backgroundText}>HomePage.</Text> */}
+      {<Text style={style.backgroundText}>HomePage.</Text>}
       <LoginScreen/>
       <FloatingButton />
     </View>

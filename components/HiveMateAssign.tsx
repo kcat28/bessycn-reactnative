@@ -7,6 +7,7 @@ interface User {
   user_id: number;
   firstname: string;
   lastname: string;
+  img_path: string;
 }
 
 interface HiveMateAssignProps {
@@ -34,7 +35,7 @@ const HiveMateAssign: React.FC<HiveMateAssignProps> = ({
           return;
         }
         
-        const response = await fetch("http://192.168.0.106:8080/HiveMembers/", {
+        const response = await fetch("http://192.168.0.101:8080/HiveMembers/", {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -44,9 +45,8 @@ const HiveMateAssign: React.FC<HiveMateAssignProps> = ({
         
         const data = await response.json();
         const formattedData = data.map((user: any) => ({
-          user_id: user.userId,
-          firstname: user.firstname,
-          lastname: user.lastname,
+          img_path: user.img_path,
+          firstname: user.userName,
         }));
         setHiveMates(formattedData);
       } catch (error) {

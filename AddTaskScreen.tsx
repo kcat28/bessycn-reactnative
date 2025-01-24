@@ -41,7 +41,7 @@ const AddTaskScreen = () => {
   const [selectedHiveMates, setSelectedHiveMates] = useState<Array<{ user_id: number}>>([]);
   
   const uploadImage = async (uri: string) => {
-    const apiUrl = 'http://192.168.0.106:8080/file/upload';
+    const apiUrl = 'http://192.168.0.101:8080/file/upload';
     const uriParts = uri.split('.');
     const fileType = uriParts[uriParts.length - 1];
   
@@ -80,8 +80,8 @@ const AddTaskScreen = () => {
       if (response.ok) {
         try {
           const data = JSON.parse(responseText);
-          const filePath = data.path.replace(/\\/g, '/');
-          return filePath;
+          const fileName = data.fileName;
+          return fileName;
         } catch (error) {
           if (error instanceof Error) {
             throw new Error(`Failed to parse JSON response: ${error.message}`);
@@ -156,7 +156,7 @@ const AddTaskScreen = () => {
       }
 
       console.log('Task data being sent:', taskData);
-      const response = await fetch('http://192.168.0.106:8080/tasks/createFullTask', {
+      const response = await fetch('http://192.168.0.101:8080/tasks/createFullTask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

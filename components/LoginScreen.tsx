@@ -1,3 +1,5 @@
+// temporary login screen, just to test the token
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +16,7 @@ const LoginScreen = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.0.106:8080/auth/login', {
+        const response = await fetch('http://192.168.0.101:8080/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +35,7 @@ const LoginScreen = () => {
         // Navigate to the desired screen
       } else {
         const errorText = await response.text();
-        console.error('Error response:', response.status, errorText);
+        // console.error('Error response:', response.status, errorText);
         Alert.alert('Error', `Failed to log in: ${errorText}`);
       }
     } catch (error) {
